@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantage Peak - 设置</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #fbbf24; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 90px; background: var(--bg); }
+        .header { background: var(--primary); color: white; padding: 25px; text-align: center; border-radius: 0 0 20px 20px; }
+        .section { padding: 20px; }
+        .set-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .set-header { padding: 15px 20px; background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+        .set-item { display: flex; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #f1f5f9; align-items: center; }
+        .set-item:last-child { border: none; }
+        .set-info b { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+        .set-info span { font-size: 0.8rem; color: #64748b; }
+        .btn-edit { color: var(--primary); font-weight: bold; font-size: 0.8rem; background: none; border: none; padding: 5px 10px; cursor: pointer; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #e2e8f0; z-index: 100; }
+        .nav-item { text-align: center; color: #94a3b8; font-size: 0.75rem; cursor: pointer; border: none; background: none; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+        .overlay { display: none; position: fixed; inset: 0; background: white; z-index: 1000; justify-content: center; align-items: center; flex-direction: column; font-weight: bold; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="loader" class="overlay"><div class="spinner"></div>正在同步...</div>
+    <div class="header">
+        <div style="color: var(--accent); font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;">Vantage Peak</div>
+        <div style="font-weight: bold; font-size: 1.1rem; margin-top: 5px;">设置</div>
+    </div>
+
+    <div class="section">
+        <div class="set-card">
+            <div class="set-header">个人信息</div>
+            <div class="set-item"><div class="set-info"><b>姓名</b><span>hyun Jéssica</span></div><button class="btn-edit" onclick="deny()">编辑</button></div>
+            <div class="set-item"><div class="set-info"><b>电子邮箱</b><span>h.jessica@vantageclient.com</span></div><button class="btn-edit" onclick="deny()">更新</button></div>
+        </div>
+
+        <div class="set-card">
+            <div class="set-header">安全设置</div>
+            <div class="set-item"><div class="set-info"><b>登录密码</b><span>上次修改于 14 天前</span></div><button class="btn-edit" onclick="deny()">修改</button></div>
+            <div class="set-item"><div class="set-info"><b>两步验证</b><span>已启用 (短信)</span></div><button class="btn-edit" onclick="deny()">管理</button></div>
+        </div>
+
+        <div class="set-card">
+            <div class="set-header">交易限额</div>
+            <div class="set-item"><div class="set-info"><b>单日转账限额</b><span>$500,000.00</span></div><button class="btn-edit" onclick="deny()">提升限额</button></div>
+            <div class="set-item"><div class="set-info"><b>币种显示</b><span>美元 ($)</span></div><button class="btn-edit" onclick="deny()">更改</button></div>
+        </div>
+        
+        <button style="width:100%; padding:18px; background:var(--primary); color:white; border:none; border-radius:14px; font-weight:bold; font-size:1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="deny()">保存所有偏好设置</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">🏠</span>首页</button>
+        <button class="nav-item" onclick="goTo('transfer.html')"><span class="nav-icon">💸</span>转账</button>
+        <button class="nav-item active" onclick="goTo('settings.html')"><span class="nav-icon">⚙️</span>设置</button>
+        <button class="nav-item" onclick="location.href='index.html'" style="color:#ef4444;"><span class="nav-icon">⏻</span>退出登录</button>
+    </nav>
+
+    <script>
+        function goTo(u){ document.getElementById('loader').style.display='flex'; setTimeout(()=>{window.location.href=u},4000); }
+        function deny(){
+            const l = document.getElementById('loader'); l.style.display='flex';
+            setTimeout(()=>{ l.style.display='none'; alert("暂不可用服务：请联络您的专属客户经理来授权处理此项变更。"); }, 3000);
+        }
+    </script>
+</body>
+</html>
