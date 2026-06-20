@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantage Peak - 转账中心</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #fbbf24; --bg: #f8fafc; --success: #22c55e; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 90px; background: var(--bg); color: #1e293b; }
+        .header { background: var(--primary); color: white; padding: 25px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .content { padding: 20px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab { padding: 10px 20px; background: white; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid transparent; transition: all 0.3s ease; }
+        .tab.active { background: var(--primary); color: white; }
+        .transfer-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; color: #64748b; text-transform: uppercase; }
+        input, select { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* 账单服务部分样式 */
+        .bill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .bill-item { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; cursor: pointer; transition: transform 0.2s; }
+        .bill-item:active { transform: scale(0.95); }
+        .bill-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+        .bill-name { font-weight: bold; font-size: 0.9rem; display: block; }
+        .bill-desc { font-size: 0.7rem; color: #64748b; margin-top: 5px; }
+
+        .error-field { border: 2px solid #ef4444 !important; background: #fff1f2 !important; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 25px; backdrop-filter: blur(5px); }
+        .modal { background: white; padding: 30px; border-radius: 24px; text-align: center; width: 100%; max-width: 400px; }
+        .tax-info { background: #fefce8; border: 1px solid #fef08a; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 0.9rem; }
+        .contact-notice { font-size: 0.8rem; color: #64748b; margin-top: 10px; line-height: 1.4; }
+        
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 18px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-outline { background: transparent; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; width: 100%; margin-top: 10px; cursor: pointer; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #e2e8f0; z-index: 100; }
+        .nav-item { text-align: center; color: #94a3b8; text-decoration: none; font-size: 0.75rem; cursor: pointer; border: none; background: none; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .converter-result { margin-top: 10px; padding: 12px; background: #f1f5f9; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; justify-content: space-between; border-left: 4px solid var(--accent); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="tax-overlay" class="overlay">
+        <div class="modal">
+            <h3 style="margin-top:0;">国际税费通知</h3>
+            <p style="font-size: 0.85rem; color: #64748b;">根据标准国际电汇协议，此笔交易须强制缴纳相关税费。</p>
+            <div class="tax-info">
+                <strong>税率: 5.8%</strong><br>
+                预计税额: <span id="tax-amount">$290.00</span>
+            </div>
+            <div class="contact-notice">
+                请联系银行办理清关结汇手续：<br>
+                <a href="tel:+13682070226" style="font-weight: bold; color: var(--primary); text-decoration: none;">+1 (368) 207-0226</a>
+            </div>
+            <button class="btn-primary" style="margin-top: 20px;" onclick="confirmTransfer()">确认并汇出</button>
+            <button class="btn-outline" onclick="closeTaxModal()">取消</button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="overlay"><div class="modal"><p>正在验证安全协议...</p></div></div>
+
+    <div class="header">
+        <div style="color: var(--accent); font-size: 0.7rem; letter-spacing: 2px;">VANTAGE PEAK</div>
+        <div style="font-weight: bold; font-size: 1.1rem; margin-top: 5px;">支付结算中心</div>
+    </div>
+
+    <div class="content">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('local')">国内转账 (美国)</div>
+            <div class="tab" onclick="showTab('international')">国际电汇</div>
+            <div class="tab" onclick="showTab('bills')">账单缴费</div>
+        </div>
+
+        <div id="local-section" class="transfer-card">
+            <div class="form-group"><label>收款人姓名</label><input type="text" id="l-name" class="v-field" placeholder="请输入完整姓名"></div>
+            <div class="form-group">
+                <label>选择银行</label>
+                <select id="l-bank-select">
+                    <option>JPMorgan Chase (摩根大通)</option>
+                    <option>Bank of America (美国银行)</option>
+                    <option>Wells Fargo (富国银行)</option>
+                    <option>Citibank (花旗银行)</option>
+                    <option>U.S. Bank (美国合众银行)</option>
+                    <option>PNC Bank (PNC银行)</option>
+                    <option>Truist Bank (楚斯特银行)</option>
+                    <option>Goldman Sachs (高盛集团)</option>
+                    <option>Capital One (第一资本银行)</option>
+                    <option>TD Bank (道明银行)</option>
+                    <option>Fifth Third Bank (第五三分行)</option>
+                    <option>Morgan Stanley (摩根士丹利)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>银行账户号码</label><input type="text" id="l-acc" class="v-field"></div>
+            <div class="form-group"><label>金额 ($)</label><input type="number" id="l-amt" class="v-field"></div>
+            <button class="btn-primary" onclick="validateLocal()">立即汇款</button>
+        </div>
+
+        <div id="international-section" class="transfer-card hidden">
+            <div class="form-group"><label>收款人法定姓名</label><input type="text" id="i-name" class="v-field" placeholder="法定全称"></div>
+            <div class="form-group"><label>收款银行名称</label><input type="text" id="i-bank-name" class="v-field" placeholder="例如：HSBC, Deutsche Bank"></div>
+            <div class="form-group"><label>IBAN / 银行账号</label><input type="text" id="i-iban" class="v-field"></div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:2;"><label>汇款金额 (USD)</label><input type="number" id="i-amt" class="v-field" oninput="updateLiveConv()"></div>
+                <div class="form-group" style="flex:1.5;">
+                    <label>结算币种</label>
+                    <select id="i-curr" onchange="updateLiveConv()">
+                        <option value="EUR">EUR (欧元)</option>
+                        <option value="BRL">BRL (巴西雷亚尔)</option>
+                        <option value="GBP">GBP (英镑)</option>
+                        <option value="TWD">TWD (新台币)</option>
+                        <option value="AUD">AUD (澳元)</option>
+                        <option value="CAD">CAD (加元)</option>
+                        <option value="HKD">HKD (港币)</option>
+                        <option value="TRY">TRY (土耳其里拉)</option>
+                        <option value="SGD">SGD (新加坡元)</option>
+                        <option value="CLP">CLP (智利比索)</option>
+                        <option value="JPY">JPY (日元)</option>
+                        <option value="PLN">PLN (波兰兹罗提)</option>
+                        <option value="RON">RON (罗马尼亚列伊)</option>
+                        <option value="ZAR">ZAR (南非兰特)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="converter-result"><span>收款人预计可得:</span><span id="conv-val">0.00 EUR</span></div>
+            <button class="btn-primary" style="margin-top:20px;" onclick="validateInternational()">发起全球电汇</button>
+        </div>
+
+        <div id="bills-section" class="hidden">
+            <h4 style="margin: 0 0 15px 5px; color: var(--primary);">便捷缴费</h4>
+            <div class="bill-grid">
+                <div class="bill-item" onclick="alert('已选择公共事业缴费服务')">
+                    <span class="bill-icon">⚡</span>
+                    <span class="bill-name">公共事业费</span>
+                    <span class="bill-desc">水费、燃气费、电费</span>
+                </div>
+                <div class="bill-item" onclick="alert('已选择宽带网络服务')">
+                    <span class="bill-icon">🌐</span>
+                    <span class="bill-name">宽带网络</span>
+                    <span class="bill-desc">光纤与无线 WiFi</span>
+                </div>
+                <div class="bill-item" onclick="alert('已选择移动话费服务')">
+                    <span class="bill-icon">📱</span>
+                    <span class="bill-name">移动话费</span>
+                    <span class="bill-desc">每月套餐充值</span>
+                </div>
+                <div class="bill-item" onclick="alert('已选择保险业务服务')">
+                    <span class="bill-icon">🛡️</span>
+                    <span class="bill-name">保险业务</span>
+                    <span class="bill-desc">医疗险与汽车险</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="goTo('dashboard.html')">🏠 首页</button>
+        <button class="nav-item active" onclick="goTo('transfer.html')">💸 转账</button>
+        <button class="nav-item" onclick="goTo('settings.html')">⚙️ 设置</button>
+        <button class="nav-item" onclick="location.href='index.html'" style="color:#ef4444;">⏻ 退出</button>
+    </nav>
+
+    <script>
+        function goTo(page) { window.location.href = page; }
+
+        function showTab(type) {
+            document.querySelectorAll('.transfer-card, #bills-section').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            const section = type === 'bills' ? document.getElementById('bills-section') : document.getElementById(type + '-section');
+            section.classList.remove('hidden');
+            if(event) event.currentTarget.classList.add('active');
+        }
+
+        function updateLiveConv() {
+            const usd = document.getElementById('i-amt').value;
+            const curr = document.getElementById('i-curr').value;
+            const rates = { 
+                "EUR": 0.92, "GBP": 0.79, "TWD": 31.74, "AUD": 1.51, "ZAR": 16.56,
+                "CAD": 1.35, "RON": 0.23, "HKD": 7.82, "CLP": 899.58, "TRY": 44.58, "SGD": 1.34, "JPY": 151.2, "PLN": 3.98, "BRL": 5.12 
+            };
+            if(usd > 0) {
+                const res = (usd * rates[curr]).toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('conv-val').innerText = `${res} ${curr}`;
+            } else {
+                document.getElementById('conv-val').innerText = `0.00 ${curr}`;
+            }
+        }
+
+        function validateInternational() {
+            let isValid = true;
+            document.querySelectorAll('#international-section .v-field').forEach(i => {
+                if(!i.value.trim()) { i.classList.add('error-field'); isValid = false; }
+                else { i.classList.remove('error-field'); }
+            });
+            
+            if(!isValid) return;
+
+            // 强制实施最低 5,000 美元汇款限制
+            const amountField = document.getElementById('i-amt');
+            const enteredAmount = parseFloat(amountField.value);
+
+            if (isNaN(enteredAmount) || enteredAmount < 5000) {
+                amountField.classList.add('error-field');
+                alert("国际电汇单笔汇款金额最低必须为 $5,000.00。");
+                return;
+            }
+
+            const tax = (enteredAmount * 0.058).toFixed(2);
+            document.getElementById('tax-amount').innerText = `$${tax}`;
+            document.getElementById('tax-overlay').style.display = 'flex';
+        }
+
+        function closeTaxModal() { document.getElementById('tax-overlay').style.display = 'none'; }
+
+        function confirmTransfer() {
+            closeTaxModal();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            setTimeout(() => {
+                alert("转账处理中。请致电客服热线 +1(368)222-3728 办理您的结算清关手续。");
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 3000);
+        }
+
+        function validateLocal() {
+            let isValid = true;
+            document.querySelectorAll('#local-section .v-field').forEach(i => {
+                if(!i.value.trim()) { i.classList.add('error-field'); isValid = false; }
+                else { i.classList.remove('error-field'); }
+            });
+            if(isValid) { confirmTransfer(); }
+        }
+    </script>
+</body>
+</html>
+
