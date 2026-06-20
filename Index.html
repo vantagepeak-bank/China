@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - MyBank</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            background: #f0f2f5; 
+        }
+        .login-card { 
+            background: white; 
+            padding: 2.5rem 1.5rem; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            width: 90%;
+            max-width: 350px; 
+            text-align: center; 
+            box-sizing: border-box;
+        }
+        h2 { margin-top: 0; color: #333; margin-bottom: 20px; }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 8px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            margin-top: 12px;
+            transition: 0.3s;
+            border: none;
+        }
+        .btn-login { background: #007bff; color: white; }
+        .btn-login:active { background: #0056b3; }
+        
+        /* New Sign Up Button Style */
+        .btn-signup { 
+            background: transparent; 
+            color: #007bff; 
+            border: 2px solid #007bff; 
+            margin-top: 10px;
+        }
+        .btn-signup:active { background: rgba(0, 123, 255, 0.1); }
+
+        .forgot-btn { 
+            color: #666; 
+            cursor: pointer; 
+            font-size: 14px; 
+            margin-top: 20px; 
+            display: block; 
+            text-decoration: underline; 
+        }
+        #loader { 
+            display: none; 
+            margin-top: 20px; 
+            color: #007bff; 
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>登录</h2>
+        <input type="text" id="username" placeholder="用户名">
+        <input type="password" id="password" placeholder="密码">
+        
+        <button class="btn-login" onclick="handleLogin()">登录</button>
+        <button class="btn-signup" id="signupBtn" onclick="handleSignUp()">注册</button>
+        
+        <span class="forgot-btn" onclick="alert('暂不提供此服务')">忘记密码？</span>
+        <div id="loader">正在处理...</div>
+    </div>
+
+    <script>
+        const loader = document.getElementById('loader');
+
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === 'hyun67' && pass === 'hyun1590#') {
+                loader.innerText = "正在验证凭据...";
+                loader.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 4000);
+            } else {
+                alert('用户名或密码无效');
+            }
+        }
+
+        // New Sign Up Function
+        function handleSignUp() {
+            loader.innerText = "正在检查可用性...";
+            loader.style.display = 'block';
+            
+            setTimeout(() => {
+                loader.style.display = 'none';
+                alert('您所在的国家/地区目前无法注册');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
